@@ -1,0 +1,136 @@
+//TRIANGLE
+
+//small up pointing triangle
+var c = radius*.85;
+    draw.line({
+      coords: [[coords[0], coords[1]-c*1.25], [coords[0]+c, coords[1]+c*.75]],
+      lineWidth: 2,
+      strokeStyle: 'grey',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]-c*1.25], [coords[0]-c, coords[1]+c*.75]],
+      lineWidth: 2,
+      strokeStyle: 'grey',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c, coords[1]+c*.75], [coords[0]-c, coords[1]+c*.75]],
+      lineWidth: 2,
+      strokeStyle: 'grey',
+      project: false
+    });
+    
+//larger pointing down triangle
+var c = radius*.95;
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]-c, coords[1]-c*.75]],
+      lineWidth: 2,
+      strokeStyle: 'red',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 2,
+      strokeStyle: 'red',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]-c*.75], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 2,
+      strokeStyle: 'red',
+      project: false
+    });
+    
+//CIRCLE
+ var c = radius-2;
+	draw.circle({
+	  coords: [coords[1], coords[0]],
+	  radius: radius,
+	  fill: true,
+	  stroke: false,
+	  fillStyle: 'black',
+	  raw: true
+	});
+	
+	
+//DIAMOND
+var c = radius*1.25;
+    draw.line({
+      coords: [[coords[0], coords[1]-c/2], [coords[0]+c/2, coords[1]]],
+      lineWidth: 2,
+      strokeStyle: 'orange',
+      project: false
+    }); // \
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]], [coords[0], coords[1]+c/2]],
+      lineWidth: 2,
+      strokeStyle: 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]], [coords[0], coords[1]-c/2]],
+      lineWidth: 2,
+      strokeStyle: 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]], [coords[0], coords[1]+c/2]],
+      lineWidth: 2,
+      strokeStyle: 'orange',
+      project: false
+    });
+    
+//SQUARE
+var c = radius*1.25;
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]-c/2]],
+      lineWidth: 2,
+      strokeStyle: 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 2,
+      strokeStyle: 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]-c/2, coords[1]-c/2]],
+      lineWidth: 2,
+      strokeStyle: 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 2,
+      strokeStyle: 'pink',
+      project: false
+    });
+    
+//STAR
+var c = radius*.75;
+    draw.line({
+      coords: [[coords[0]-c*1.25, coords[1]], [coords[0]+c*1.25, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0], coords[1]-c*1.25]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.55, coords[1]-c*.55], [coords[0]+c*.55, coords[1]+c*.55]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.55, coords[1]+c*.55], [coords[0]+c*.55, coords[1]-c*.55]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
