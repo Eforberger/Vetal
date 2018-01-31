@@ -1,0 +1,2447 @@
+<!--
+ for making own draw functions? https://www.w3schools.com/graphics/canvas_coordinates.asp
+-->
+<!DOCTYPE html>
+<html>
+<head>
+
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="/resources/demos/style.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name = "keywords" content = "IceCube Neutrino multi-messenger Astronomy cosmic ray rays resarch website skymap Fermi HAWC Vetal">
+<meta name="author" content= "Elsa Forberger, Haley James, Blake Gallay, Marcus Graham, Emme Hannibal">
+<title>Vetal</title>
+<style>
+
+body {
+  background: #FFFFFF;
+  font-family: "Times New Roman", Times, serif;
+  width: 1220px;
+}
+
+div.tab {
+	float:left;
+	padding: 1% 0;
+	display:inline-block;
+    width: 25%;/*305px;*/
+    
+}
+
+/* Style the buttons that are used to open and close the accordion panel */
+button.accordion {
+    background-color: #A9A9A9; 
+    color: #444;
+    cursor: pointer;
+    padding: 7%;/*18px;!!*/
+    width: 99%;/*303px;*/
+    text-align: left;
+    border: none;
+    outline: none;
+    transition: 0.4s;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+button.accordion.active, button.accordion:hover {
+    background-color: #CAEBF2;
+}
+
+/*scrolling checkboxes for source types*/
+div.container { 
+	border:2px solid #ccc; 
+	width: 95%;/*260px; !!*/
+	height: 100px;
+	overflow-y: scroll; 
+}
+
+/* Style the accordion panel. Note: hidden by default */
+div.panel {
+    padding: 10px 7%;/*18px;*/
+    background-color:#EFEFEF;
+    display: none;
+    width: 259px;
+}
+
+multiple.selected {
+	color: #FF3B3F;
+}
+
+multiple.normal {
+	color: 'black';
+}
+  
+ul.ghost {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+li.ghost {
+    float: left;
+    
+}
+
+li.ghost a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    width: 150px;
+    
+}
+
+/* Change the link color to #111 (black) on hover */
+li.ghost a:hover:not(.active) {
+    background-color: #111;
+    
+}
+
+.active {
+    background-color: #CAEBF2;
+    color: #111;
+    border-top: 1px solid #111;
+    border-bottom: 1px solid #111;
+    border-left: 1px solid #111;
+    
+}
+
+li.ghost {
+    border-right: 1px solid #bbb;
+}
+
+
+</style>
+
+ <script>
+  $( function(){
+  		var slider_data = {};
+  		sliders = function(name){
+  			function scale(value){
+  				var minp = 0;
+				var maxp = 100;
+		  		
+				// The result should be between 100 an 10000000
+				var minv = Math.log(slider_data[name][0]);
+			  	var maxv = Math.log(slider_data[name][1]);
+
+			  	// calculate adjustment factor
+			  	var scale = (maxv-minv) / (maxp-minp);
+				
+				//use for log scale
+			  	value = Math.exp(minv + scale*((value*100)-minp));
+			  	
+  				//use for linear scale
+  				//value *= (slider_data[name][1]-slider_data[name][0]);
+  				//value += slider_data[name][0];
+  				  				
+  				return value;
+  			}
+  			var methods = {
+  				set: function(min, max, callback) {
+  					if (callback == null && name in slider_data) {
+  						callback = slider_data[name][2];
+  					}
+  					slider_data[name] = [min,max,callback];
+  					$("#"+name).slider({
+  						range: true,
+  						min: 0,
+  						max: 1,
+  						step: 0.01,
+  						values: [0,1],
+  						slide: function(event,ui){
+  							callback(scale(ui.values[0]),scale(ui.values[1]));
+  						}
+  	 				});
+  	 				callback(methods.get(0),methods.get(1));
+  	 			},
+  				get: function(pos) {
+  					var value = $("#"+name).slider("option","values")[pos];
+  					return scale(value);
+  				}
+  			};
+  			return methods;
+  		};
+  		
+  		sliders("neutrinoslider").set(1,100,function(pos0, pos1){
+  			  	if (!isNaN(pos0)  && !isNaN(pos1)) {
+  					$( "#neutrinoamount" ).val(parseInt(pos0) + " TeV - " + parseInt(pos1) + " TeV");
+  				}
+  				else{
+  					$( "#neutrinoamount" ).val("No energy values found");
+  				}
+  		});
+  		sliders("gamma_rayslider").set(1,100,function(pos0, pos1){
+  			if (!isNaN(pos0)  && !isNaN(pos1)) {
+  				$( "#gamma_rayamount" ).val(parseInt(pos0) + " MeV - " + parseInt(pos1) + " MeV");
+  			}
+  				else{
+  					$( "#gamma_rayamount" ).val("No energy values found");
+  				}
+  		});
+  		sliders("sourceslider").set(1,100,function(pos0, pos1){
+			if (!isNaN(pos0)  && !isNaN(pos1)) {
+  				$( "#sourceamount" ).val(pos0*1000/1000 + " - " + pos1*1000/1000);  	
+  			}
+			else{
+				$( "#sourceamount" ).val("No values found");
+			}		
+  		});
+  		sliders("otherslider").set(1,100,function(pos0, pos1){
+			if (!isNaN(pos0)  && !isNaN(pos1)) {
+  				$( "#otheramount" ).val(parseInt(pos0) + " - " + parseInt(pos1));  	
+  			}
+			else{
+				$( "#otheramount" ).val("No values found");
+			}		
+  		});
+  	});
+  	
+  </script>
+  
+</head>
+<body>
+
+<div>
+	<ul class="ghost">
+		  <li class="ghost" ><a href="http://icecube.wisc.edu/~eforberger/Vetal.html">Home</a></li>
+ 		  <li class="ghost"><a class="active" href="http://icecube.wisc.edu/~eforberger/skymap_about.html"><font color="black">About</font></a></li>
+	</ul>
+</div>
+
+
+ <!-- START -->
+ <h1><big><big>ν</big></big>etal:  <font size=5>   a Multi-Messenger Skymap </font></h1> 
+ <button onclick="show_fermi_info()">Fermi Conversion Info</button>
+  <div id = "ferminfo" style="background-color: #CAEBF2; display: none; margin-top: 5px; position: fixed; margin-left: 50x; width: 250px; height: 280px; z-index: 5;">
+  <h4 style="color: black; font-size: 15; margin-left: 10px;">Converting and Uploading Fermi LAT Files</h4>
+  <h4 style="color: black; font-size: 15; margin-left: 10px;">Download conversion utility:</h4><a href="/~eforberger/Utilities/fits2txt.zip" download>
+  <button >Download</button></a>
+  <h4 style="color: black; font-size: 15; margin-left: 10px;">Run fits2txt.app, then open the file navigator and select a Fermi .FITS file. Once the file has been processed, fermidataformatted.txt can be found under /fits2txt.app/Contents/Resources.</h4>
+</div>
+ <input type="file" id="myFile" name='myFile' multiple size="5" onchange="showUIParts(false)">
+ <label for="checkbox-1">IceCube</label>
+    <input type="checkbox" name="checkbox-1" id="neutrino" onchange="showUIParts(false)">&nbsp;
+    <label for="checkbox-2">Fermi Events</label>
+    <input type="checkbox" name="checkbox-2" id="gamma_ray" onchange="showUIParts(false)">&nbsp;
+    <label for="checkbox-3">Gamma Ray Sources</label>
+    <input type="checkbox" name="checkbox-3" id="source" onchange="showUIParts(false)">&nbsp;
+    <label for="checkbox-4">Other</label>
+    <input type="checkbox" name="checkbox-4" id="other" onchange="showUIParts(false)">&nbsp;
+ <button onclick="showUIParts(true)">Submit</button>
+	<label for="galactic">Galactic Coordinates</label>
+	<input type="radio" name="coord_type" id="galactic"  checked=true onchange="coordType()">&nbsp;&nbsp;
+	<label for="equatorial">Equatorial Coordinates</label>
+	<input type="radio" name="coord_type" id="equatorial"  onchange="coordType()">
+
+<div class="tab">
+
+<button class="accordion" ">IceCube</button> 
+
+<div id="other_div" class="panel" ">
+  <div id = 'Ice Cube' >
+	
+	<select multiple id="neutrinoselect" style = "width: 95%" onchange = "changeEnergyParams('neutrino')" onmouseover = 'changeSelectedColor("neutrino")' > </select>
+     
+     <fieldset style="width:200px">
+ 	<legend>IceCube Types</legend>
+ 	<label for="shower">Shower</label>
+    <input type="checkbox" name="shower" id="shower" checked=true>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <label for="track">Track</label>
+    <input type="checkbox" name="track" id="track" checked=true>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    </fieldset>
+    <br></br>
+    
+    <form id = 'Neutrinoinput'>
+<p>
+  <label for="neutrinoamount">Enter the minimum and maximum energy levels and corresponding colors.:</label>
+    <input type="color" name="col" id="colnmin" value="#d8000d">    to  <input type="color" name="col" id="colnmax" value="#ede900">  <br>
+  <input type="text" id="neutrinoamount" readonly style="border:0; color:#f6931f; font-weight:bold;"> 
+</p>
+	<div id="neutrinoslider"></div>
+	
+	<label for ="neutrinoColorScale" >What scale to use for the color?</label>
+	<select id = "neutrinoColorScale">
+  	<option value="log">Use log<sub>10</sub></option>
+  	<option value="lin">Use a linear scale</option>
+ 	 <option value="linsqrt">Use a square root scale.</option>
+	</select>
+	
+		</form>
+	
+	</div> 
+</div>
+</div>
+
+<div class="tab">
+<button class="accordion">Fermi/Gamma Ray Events</button>
+
+
+<div id="other_div2" class="panel">
+<div id = 'Fermi/Gamma Ray Events'  >
+	<select multiple id="gamma_rayselect"  style = "width: 95%" onchange = "changeEnergyParams('gamma_ray')" onmouseover = 'changeSelectedColor("gamma_ray")'></select>
+<br></br><br></br>
+<form id = 'gamma_rayinput'>
+
+<p>
+  <label for="gamma_rayamount">Enter the minimum and maximum energy levels and corresponding colors.:</label>
+    <input type="color" name="col" id="colgmin" value="#61187a">  to   <input type="color" name="col" id="colgmax" value="#42f445"> <br>
+  <input type="text" id="gamma_rayamount" readonly style="border:0; color:#f6931f; font-weight:bold;">  
+</p>
+	<div id="gamma_rayslider"></div>
+	<label for ="gamma_rayColorScale">What scale to use for the color?</label>
+	<select id = "gamma_rayColorScale">
+		<option value="log">Use log<sub>10</sub></option>
+		<option value="lin">Use a linear scale</option>
+		 <option value="linsqrt">Use a square root scale.</option>
+	</select>	</form>
+	
+</div>
+</div>
+</div>
+
+<div class="tab">
+<button class="accordion">Gamma Ray Sources</button>
+
+
+<div id="gamma_div" class="panel" style="height:auto">
+<div id = 'Gamma Ray Sources'  >
+
+
+	<select multiple id="sourceselect"  style = "width: 95%" onchange = "changeEnergyParams('source')" onmouseover = 'changeSelectedColor("source")'></select>
+	
+
+	<div class="container">
+	<label for="1" style ="font-size:15px">Unidentified</label>
+    <input type="checkbox" name="UNID" id="1" align ='right' checked=true> <br>
+    <label for="4" style ="font-size:15px">Composite SNR</label>
+    <input type="checkbox" name="CompositeSNR" id="4" checked=true> <br>
+     <label for="7" style ="font-size:15px">Shell</label>
+    <input type="checkbox" name="Shell" id="7" checked=true> <br>
+    <label for="2" style ="font-size:15px">Pulsar Wind Nebula</label>
+    <input type="checkbox" name="PWN" id="2" checked=true> <br>
+    <label for="3" style ="font-size:15px">High frequency blazar</label>
+    <input type="checkbox" name="HBL" id="3" checked=true> <br>
+    <label for="5" style ="font-size:15px">Massive Star Cluster</label>
+    <input type="checkbox" name="MassiveStarCluster" id="5" checked=true> <br>
+    <label for="9" style ="font-size:15px">Active Galaxy</label>
+    <input type="checkbox" name="bcu" id="9" checked=true> <br>
+    <label for="10" style ="font-size:15px">FSRQ Blazar</label>
+    <input type="checkbox" name="fsrq" id="10" checked=true> <br>
+    <label for="12" style ="font-size:15px">Radio Galaxy</label>
+    <input type="checkbox" name="rdg" id="12" checked=true>  <br>
+    <label for="13" style ="font-size:15px">Supernova Remnant</label>
+    <input type="checkbox" name="snr" id="13" checked=true> <br>
+    <label for="14" style ="font-size:15px">Starburst Galaxy</label>
+    <input type="checkbox" name="sbg" id="14" checked=true> <br>
+    <label for="15" style ="font-size:15px">special case-potential association with SNR or PWN</label>
+    <input type="checkbox" name="spp" id="15" checked=true> <br>
+    <label for="16" style ="font-size:15px">Globular Cluster</label>
+    <input type="checkbox" name="glc" id="16" checked=true>  <br>
+    <label for="17" style ="font-size:15px">non-blazar active galaxy</label>
+    <input type="checkbox" name="agn" id="17" checked=true> <br>
+    <label for="18" style ="font-size:15px">Compact steep spectrum quasar</label>
+    <input type="checkbox" name="css" id="18" checked=true> <br>
+    <label for="19" style ="font-size:15px">Soft spectrum radio quasar</label>
+    <input type="checkbox" name="ssrq" id="19" checked=true> <br>
+    <label for="6" style ="font-size:15px">SNR Molecule Cloud</label>
+    <input type="checkbox" name="SNRMolecCloud" id="6" checked=true> <br>
+    <label for="8" style ="font-size:15px">Bl Lac Blazar</label>
+    <input type="checkbox" name="bll" id="8" checked=true> <br>
+     <label for="11" style ="font-size:15px">Pulsar, no pulsations found</label>
+    <input type="checkbox" name="psr" id="11" checked=true> <br>
+    <label for="20" style ="font-size:15px">Pulsar, identified by pulsations</label>
+    <input type="checkbox" name="psri" id="20" checked=true> <br>
+    </div>
+    <!-- to add in new types:
+    1) Add in a new input and its label. Don't forget to change the id on both of the lines
+    2) Go to the function called updateTypeList(). Set the max for k to be 1+the max id.
+    3) In the list types, add in the new type drawing instructions. The entry in type should be the name of the new type.
+    4) Go to the function drawPoints(). In the place where source data is drawn (it's labeled) add the name of the new type to the list containing all the sources. 
+    	-if the entry in types contains both circles and lines, add the type name to the list in the if-statment that sents the var coords
+    -->
+    
+    <form id = sourceinput>
+	
+	<label for="spec_index">Spectral Index</label>
+    <input type="radio" name="radio_name" id="spec_index" onchange="changeEnergyParams('source')" checked=true>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     <label for="flux">Flux</label>
+    <input type="radio" name="radio_name" id="flux" onchange="changeEnergyParams('source')" ><br></br>
+    
+    <p id ="spec_form">Choose range of spectral index and corresponding colors to display.</p>
+    
+    <p id="flux_form">Choose range of flux and corresponding colors to display.</p>
+<p>
+  <input type="color" name="col" id="colsourcemin" value="#ff00e7">   to <input type="color" name="col" id="colsourcemax" value="#34e5b0"> <br>
+  <input type="text" id="sourceamount" readonly style="border:0; color:#f6931f; font-weight:bold;"> 
+	</form>	
+</p>
+	<div id="sourceslider"></div> 
+	<label for ="sourceColorScale" >What scale to use for the color?</label>
+	<select id = "sourceColorScale">
+		<option value="log">Use log<sub>10</sub></option>
+		<option value="lin">Use a linear scale</option>
+		 <option value="linsqrt">Use a square root scale.</option>
+	</select>	
+</div>
+</div>
+</div>
+
+<div class="tab">
+<button class="accordion">Other Data</button>
+
+
+<div id="other_div3" class="panel">
+<div id = 'Other Data' >
+	<select multiple id="otherselect"  style = "width: 95%" onchange = "changeEnergyParams('other')" onmouseover = 'changeSelectedColor("other")' > <!--onmouseover = 'changeSelectedColor()'-->
+	<option></option>
+	</select>
+
+<br></br> <br></br>
+	<form id = 'otherinput'>
+<p>
+  <label for="otheramount">Enter the minimum and maximum value levels and corresponding colors.</label> <br>
+   <input type="color" name="col" id="colomin" value="#61187a">  to   <input type="color" name="col" id="colomax" value="#ed9e00"> <br>
+  <input type="text" id="otheramount" readonly style="border:0; color:#f6931f; font-weight:bold;"> 
+</p>
+	<div id="sourceslider"></div>
+	 <label for ="otherColorScale" >What scale to use for the color?</label>
+	<select id = "otherColorScale">
+		<option value="log">Use log<sub>10</sub></option>
+		<option value="lin">Use a linear scale</option>
+		 <option value="linsqrt">Use a square root scale.</option>
+	</select>	
+	</form>
+	
+	
+</div>
+</div>
+
+</div>
+<div style="width:100%;clear:both"></div>
+
+<br></br>
+<div>
+<label for="timebox">Toggle filtering by time</label>
+  <input type="checkbox" name="timebox" id="timebox" onchange = "showUIParts(false)"><br></br>
+ 	<form id="times">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  	<label for="year">Year</label>
+  	<input type="text" name = "year" id="year" value="2017" style = 'width: 5%'>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <label for="month">Month</label>
+  	<input type="text" name = "month" id="month" value="Oct" style = 'width: 5%'>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <label for="day">Day</label>
+  	<input type="text" name = "day" id="day" value="28" style = 'width: 5%'>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+ <label for="hour">Hour</label>
+  	<input type="text" name = "hour" id="hour" value="10" style = 'width: 5%'>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <label for="minute">Minute</label>
+  	<input type="text" name = "minute" id="minute" value="00" style = 'width: 5%'>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <label for="second">Second</label>
+  	<input type="text" name = "second" id="second" value="00" style = 'width: 5%'>
+  	</form>
+</div> 	
+
+<div>
+	
+	<form style="position:relative; left:900px; top:-20px; z-index:2" id="vampire">
+	Margin
+	
+	<input type="text" name = "margin" id="margin" value=31536000>
+	
+	<select id="timeselect">
+	<option value="y">Years</option>
+	<option value="m">Months</option>
+	<option value="d">Days</option>
+	<option value="h">Hours</option>
+	<option value="m">Minutes</option>
+	<option value="s" selected>Seconds</option>
+	</select>
+</div>
+
+<div>
+	<label for="zoombox">Toggle zoom and pan</label>
+		<input type="checkbox" name="zoombox" id="zoombox">
+</div>
+<br>
+ <u>When displaying neutrino data, click on the points to select events </u>
+<br>
+Only display events within selected neutrino error regions<input type='checkbox' id='onlyErr'>
+Only show selected neutrinos:<input type='checkbox' id='filterNeutrinos'>
+Clear Selections<input type="button" onclick="clear_selection()"><!--ND!!-->
+<div id="werewolf">
+
+<script src="d3.v4.min.js"></script>
+<script src="d3-geo-projection.v2.min.js"></script>
+<script src="astro.js"></script>
+<script src="astro.constants.js"></script>
+<script src="astro.coordinates.js"></script>
+
+
+
+<script>
+var acc = document.getElementsByClassName("accordion");
+var i;
+var dataBinding;
+
+//changes color of moused over file in the file selectors
+selected_neutrino = 0;
+selected_events = [];
+
+function clear_selection(){
+selected_events = [];
+}
+
+//changes color of the name in the file selector that the mouse is over
+function changeSelectedColor(x){
+	
+	$('#'+x+"select option").each(function(){
+		$(this).hover(
+  			function() {
+				$(this).css('color', '#FF3B3F');
+			}, 
+			function() {
+				$(this).css('color', 'black');
+			}
+		);
+	});
+}
+
+//Makes all collapsibles the same size
+function changeHeight() {
+	var otherHeight=$("#other_div").height();
+	var gammaHeight=$("#gamma_div").height();
+	otherHeight=gammaHeight;
+	$("#other_div").height(otherHeight-53);
+	$("#other_div2").height(otherHeight-53);
+	$("#other_div3").height(otherHeight-53);
+}
+changeHeight();
+
+//Allows user to deselect radio
+$(document).ready(function(){
+
+	$(function(){
+		var notAllRadios = $('input[name=radio_name]')
+		var radioChecked;
+
+		var setCurrent = function(e) {
+			var obj = e.target;
+			radioChecked = $(obj).attr('checked');
+		}
+
+		var setCheck = function(e) {
+			if (e.type == 'keypress' && e.charCode != 32) {
+				return false;
+			}
+			var obj = e.target;
+			if (radioChecked) {
+				$(obj).attr('checked', false);
+				//$(obj).attr('onchange', changeEnergyParams('source'));//showUIParts(false) == false);
+			} 
+			else {
+				$(obj).attr('checked', true);
+				//$(obj).attr('onchange', changeEnergyParams('source'));//showUIParts(false));
+			}
+		} 
+
+		$.each(notAllRadios, function(i, val){ 
+			var label = $('label[for=' + $(this).attr("id") + ']');
+			$(this).bind('mousedown keydown', function(e){
+				setCurrent(e);
+			});
+
+			label.bind('mousedown keydown', function(e){
+				e.target = $('#' + $(this).attr("for"));
+				setCurrent(e);
+			});
+
+			$(this).bind('click', function(e){
+				setCheck(e); 
+			});
+
+		});
+
+	});
+});
+
+//Handles panel toggeling
+for (i = 0; i < acc.length; i++) {
+    acc[i].onclick = function(){
+        /* Toggle between adding and removing the "active" class,
+        to highlight the button that controls the panel */
+        this.classList.toggle("active");
+
+        /* Toggle between hiding and showing the active panel */
+        var panel = this.nextElementSibling;
+        if (panel.style.display === "block") {
+            panel.style.display = "none";
+        } else {
+            panel.style.display = "block";
+        }
+    }
+}
+
+
+ showUIParts(true);
+// Object.assign polyfill
+
+//stringout is all the points to draw.
+function skymap(stringout) {
+
+if (typeof Object.assign != 'function') {
+  Object.assign = function(target, varArgs) { // .length of function is 2
+    'use strict';
+    if (target == null) { // TypeError if undefined or null
+      throw new TypeError('Cannot convert undefined or null to object');
+    }
+    var to = Object(target);
+    for (var index = 1; index < arguments.length; index++) {
+      var nextSource = arguments[index];
+      if (nextSource != null) { // Skip over if undefined or null
+        for (var nextKey in nextSource) {
+          // Avoid bugs when hasOwnProperty is shadowed
+          if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+            to[nextKey] = nextSource[nextKey];
+          }
+        }
+      }
+    }
+    return to;
+  };
+}
+
+
+function toDegrees(angle) {
+  return angle * (180 / Math.PI);
+}
+function toRadians(angle) {
+  return angle * (Math.PI / 180);
+}
+
+var reset_styles = function(context) {
+  context.lineWidth = 1;
+  context.strokeStyle = 'black';
+  context.setLineDash([]);
+  context.fillStyle = 'black';
+  context.font = '10px sans-serif';
+}
+var draw = function(context, projection){
+  var raw_curve = d3.line()
+    .context(context);
+  var curve = d3.line()
+    .curve(d3.curveCardinal)
+    .x(function(d){ return projection(d)[0]; })
+    .y(function(d){ return projection(d)[1]; })
+    .context(context);
+  var safe_curve = d3.line()
+    .curve(d3.curveCardinal)
+    .defined(function(d){
+    	if (Galactic){
+    	  if (d[0] < -179.8|| d[0] > 179.8)
+        	return null;
+    	} else {
+    		if (d[0] < 0.2 || d[0] > 359.8)
+    		return null;
+    	}
+      	if (d[1] < -90 || d[1] > 90)
+      	return null;
+      return d;
+    })
+    .x(function(d){ return projection(d)[0]; })
+    .y(function(d){ return projection(d)[1]; })
+    .context(context);
+  var wrap_coords = function(coords) {
+    while (coords[1] < -90 || coords[1] > 90) {
+      if (coords[1] > 90)
+        coords[1] = 180 - coords[1];
+      else
+        coords[1] = -180 - coords[1];
+      coords[0] += 180;
+    }
+    if (Galactic){
+    	while (coords[0] < -181) { coords[0] += 360; } 
+    	while (coords[0] > 181) { coords[0] -= 360; } 
+    	return coords;
+    } 
+    while (coords[0] < -1) { coords[0] += 360; } 
+    while (coords[0] > 361) { coords[0] -= 360; } 
+    return coords;
+  }
+  return {
+    text: function(params) {
+      params = Object.assign({
+        coords: [],
+        offset: [5, -5],
+        font: "10px sans-serif",
+        color: "black",
+        text: ""
+      }, params);
+      params.coords = projection(params.coords);
+      var x = params.coords[0]+params.offset[0];
+      var y = params.coords[1]+params.offset[1]
+
+      context.font = params.font;
+      context.fillStyle = params.color;
+      context.fillText(params.text, x, y);
+      reset_styles(context);
+    },
+    line: function(params) {
+      params = Object.assign({
+        coords: [],
+        project: true, // project the coordinates 
+        wrap: true,
+        strokeStyle: "black",
+        lineWidth: 1
+      }, params);
+
+      context.beginPath();
+      if (!params.project)
+        raw_curve(params.coords);
+      else if (params.wrap)
+        safe_curve(params.coords);
+      else
+        curve(params.coords);
+      context.strokeStyle = params.strokeStyle;
+      context.lineWidth = params.lineWidth;
+      context.stroke();
+      reset_styles(context);
+    },
+    circle: function(params){
+      params = Object.assign({
+        coords: [],
+        radius: 1,
+        wrap: true,
+        raw: false, // just project the coords, not the bounding circle
+        fill: false,
+        stroke: true,
+        fillStyle: "black",
+        strokeStyle: "black",
+        lineWidth: 1
+      }, params);
+      //var raw = params.coords //rd
+      if (params.raw)
+        params.coords = projection(params.coords);
+      var data = [];
+      for(var i=0;i<2*Math.PI+.1;i+=Math.PI/500) {
+        var tmp = [params.coords[0] + params.radius * Math.cos(i),
+                   params.coords[1] + params.radius * Math.sin(i)];
+        if (params.wrap && !params.raw)
+          tmp = wrap_coords(tmp);
+        data.push(tmp);
+      }
+
+      if (params.fill) {
+        context.beginPath();
+        if (params.raw)
+          raw_curve(data);
+        else if (params.wrap)
+          safe_curve(data);
+        else
+          curve(data);
+        context.fillStyle = params.fillStyle;
+        context.fill();
+      }
+      if (params.stroke) {
+        context.beginPath();
+        if (params.raw)
+          raw_curve(data);
+        else if (params.wrap)
+          safe_curve(data);
+        else
+          curve(data);
+        context.strokeStyle = params.strokeStyle;
+        context.lineWidth = params.lineWidth;
+        context.stroke();
+      }
+      reset_styles(context);
+    }
+  }
+};
+
+var types = {
+
+//NEUTRINO TYPES
+  shower: function(draw, coords, radius, color){
+    var c = radius;
+    draw.line({
+      coords: [[coords[0]-c, coords[1]], [coords[0]+c, coords[1]]],
+      lineWidth: 2,
+      strokeStyle: 'white',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]-c], [coords[0], coords[1]+c]],
+      lineWidth: 2,
+      strokeStyle: 'white',
+      project: false
+    });
+  },
+  track: function(draw, coords, radius, color){
+    var c = Math.sqrt(radius*radius*2)/2;
+    draw.line({
+      coords: [[coords[0]-c, coords[1]-c], [coords[0]+c, coords[1]+c]],
+      lineWidth: 2,
+      strokeStyle: 'white',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]+c], [coords[0]+c, coords[1]-c]],
+      lineWidth: 2,
+      strokeStyle: 'white',
+      project: false
+    });
+  },
+  
+//SOURCE TYPES
+/*
+			agn   = other non-blazar active galaxy-orange/brown cross
+            bcu   = active galaxy of uncertain type- dark grey linestar
+            bin   = binary - nOT IN
+            bll   = BL Lac type of blazar - blue down facing triangle
+            css   = compact steep spectrum quasar- purple diamond
+            fsrq  = FSRQ type of blazar-dark blue, up facing triangle
+            gal   = normal galaxy (or part)- NOT IN
+            glc   = globular cluster- two unfilled magenta circles
+            hmb   = high-mass binary- NOT IN
+            nlsy1 = narrow line Seyfert 1- NOT IN
+            nov   = nova- NOT IN
+            PSRI   = pulsar, identified by pulsations-maroon circle with a maroon filled circle inside
+            psr   = pulsar, no pulsations seen in LAT yet-dark red circle, no fill
+            pwn   = pulsar wind nebula-red circle with cross inside
+            rdg   = radio galaxy-orange linestar
+            sbg   = starburst galaxy-orangered linestar
+            sey   = Seyfert galaxy NOT IN
+            sfr   = star-forming region NOT IN
+            snr   = supernova remnant-green square
+            spp   = special case - potential association with SNR or PWN-orange circle w/linestar inside
+            ssrq  = soft spectrum radio quasar -purple diamond w/line inside
+            High frequency Blazar (HBL)-black triangle w/line in the middle
+			Composite Supernova remnant (CompositeSNR)- green square w/circle inside
+			Massive Star Cluster (MassiveStarCluster)-pink star
+			Shell (Shell-pink line with two little lines crossing it
+			Supernova remnant Molecular Cloud (SNRMolecCloud)-green square with line across
+			unid- grey square
+*/
+//PULSAR-CIRCLE
+  pwn: function(draw, coords, radius, color){//pulsar wind nebula-red circle with cross ND
+   var c = radius*.66;
+    draw.circle({
+	   coords: [coords[0][0], coords[0][1]],
+        radius: c,
+        wrap: true,
+        raw: true, 
+        fill: false,
+        lineWidth: 1,
+        stroke: true,
+        strokeStyle: (color != 'useDefault')? color : 'red'
+	});
+    draw.line({
+      coords: [[coords[1][0], coords[1][1]-c], [coords[1][0], coords[1][1]+c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'red',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]+c, coords[1][1]], [coords[1][0]-c, coords[1][1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'red',
+      project: false
+    });
+  },//pulsar wind nebula-red circle with cross ND
+  psri: function(draw, coords, radius, color){//pulsar, identified by pulsations 
+    var c = radius*.66;
+   draw.circle({
+	  coords: [coords[0][0], coords[0][1]],
+	  radius: c,
+	  raw: true,
+	  fill: false,
+	  strokeStyle: (color != 'useDefault')? color: 'maroon'
+	});
+
+	draw.circle({
+	  coords: [parseFloat(coords[0][0])+c/8, parseFloat(coords[0][1])+c/8],
+	  radius: c-3,
+	  raw: true,
+	  fill: false,
+	  strokeStyle: (color != 'useDefault')? color: 'maroon'
+	});
+	draw.circle({
+	  coords: [parseFloat(coords[0][0])-c/8, parseFloat(coords[0][1])-c/8],
+	  radius: c-3,
+	  raw: true,
+	  fill: false,
+	  strokeStyle: (color != 'useDefault')? color: 'maroon'
+	});
+  },//pulsar, identified by pulsations  
+  psr: function(draw, coords, radius, color){//pulsar, no pulsations seen in LAT yet 
+    var c = radius-3;
+	draw.circle({
+	  coords: [coords[0][0], coords[0][1]],
+	  radius: radius,
+	  fill: false,
+	  stroke: true,
+	  strokeStyle: (color != 'useDefault')? color: 'darkred',
+	  raw: true
+	});
+  },//pulsar, no pulsations seen in LAT yet - ND
+  
+//pulsar/snr
+ spp: function(draw, coords, radius, color){//pulsar wind nebula-red circle with cross ND
+   var c = radius*.66;
+    draw.circle({
+	   coords: [coords[0][0], coords[0][1]],
+        radius: c,
+        wrap: true,
+        raw: true, 
+        fill: false,
+        stroke: true,
+        strokeStyle: (color != 'useDefault')? color : 'orange'
+	});
+    draw.line({
+      coords: [[coords[1][0], coords[1][1]-c], [coords[1][0], coords[1][1]+c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]-c, coords[1][1]], [coords[1][0]+c, coords[1][1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]-c*.85, coords[1][1]-c*.85], [coords[1][0]+c*.85, coords[1][1]+c*.85]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]-c*.85, coords[1][1]+c*.85], [coords[1][0]+c*.85, coords[1][1]-c*.85]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+  },//spp circle with line star inside
+  
+//BLAZAR-TRIANGLE
+  fsrq: function(draw, coords, radius, color){//FSRQ type of blazar 
+   var c = radius*.66;
+    draw.line({
+      coords: [[coords[0], coords[1]-c*1.25], [coords[0]+c, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'navy',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]-c*1.25], [coords[0]-c, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'navy ',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c, coords[1]+c*.75], [coords[0]-c, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'navy',
+      project: false
+    });
+  },//blazar-green up triangle
+  hbl: function(draw, coords, radius, color){//high frequency blazar 
+   var c = radius*.75;
+   draw.line({
+      coords: [[coords[0]-c*.75, coords[1]], [coords[0]+c*.75, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'black',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]-c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'black',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'black',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]-c*.75], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'black',
+      project: false
+    });
+  },//high frequency blazar-black tri w/line in middle
+  bll: function(draw, coords, radius, color){//blue triangle
+   var c = radius*.75;
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]-c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'blue',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'blue',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]-c*.75], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'blue',
+      project: false
+    });
+  },//blazar- blue triangle
+  unid: function(draw, coords, radius, color){//unidentified-grey square
+    var c = radius*1.25;
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color == 'useDefault')? 'grey':color,//'grey',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color == 'useDefault')? 'grey':color,
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]-c/2, coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color == 'useDefault')? 'grey':color,
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color == 'useDefault')? 'grey':color,
+      project: false
+    });
+  }, //grey square
+
+//SNR- DIAMOND/SQUARE   GREEN
+  compositesnr: function(draw, coords, radius, color){
+    var c = radius*1.25;
+    draw.circle({
+	   coords: [coords[0][0], coords[0][1]],
+        radius: c-2,
+        wrap: true,
+        raw: true, 
+        fill: true,
+        fillStyle: (color != 'useDefault')? color : 'green'
+	});
+      draw.line({
+      coords: [[coords[1][0]-c/2, coords[1][1]-c/2], [coords[1][0]+c/2, coords[1][1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]-c/2, coords[1][1]+c/2], [coords[1][0]+c/2, coords[1][1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]-c/2, coords[1][1]+c/2], [coords[1][0]-c/2, coords[1][1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[1][0]+c/2, coords[1][1]-c/2], [coords[1][0]+c/2, coords[1][1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+  },//supernova remm- red square w/red circle inside nOT DISPLAYING
+  snr: function(draw, coords, radius, color){//snr   = supernova remnant 23
+    var c = radius*1.25;
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]-c/2, coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'green',
+      project: false
+    });
+  },//supernova remnant - red square 
+  snrmoleccloud: function(draw, coords, radius, color){
+    var c = radius*0.75;
+    draw.line({
+      coords: [[coords[0]-c*.70, coords[1]], [coords[0]+c*.70, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'limegreen',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'limegreen',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'limegreen',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]+c/2], [coords[0]-c/2, coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'limegreen',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]-c/2], [coords[0]+c/2, coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'limegreen',
+      project: false
+    });
+  },//supernova remm- red square w/red cross inside
+  massivestarcluster: function(draw, coords, radius, color){
+    var c = radius*0.75;
+    draw.line({
+      coords: [[coords[0], coords[1]-c*1.25], [coords[0]+c, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]-c*1.25], [coords[0]-c, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c, coords[1]+c*.75], [coords[0]-c, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]-c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'pink',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]-c*.75], [coords[0]+c, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'pink',
+      project: false
+    });
+  },//large orange star
+  glc: function(draw, coords, radius, color){
+  var c = radius*.66
+   draw.circle({
+	   coords: [coords[0][0], coords[0][1]],
+        radius: c,
+        wrap: true,
+        raw: true, 
+        fill: false,
+        stroke: true,
+        lineWidth: 1,
+        strokeStyle: (color != 'useDefault')? color : 'magenta'
+	});
+	draw.circle({
+	   coords: [coords[0][0], coords[0][1]],
+        radius: c-3,
+        wrap: true,
+        raw: true, 
+        fill: false,
+        stroke: true,
+        lineWidth: 1,
+        strokeStyle: (color != 'useDefault')? color : 'magenta'
+	});
+  },//glc clobular cluster two unfilled circles, one in the other
+  shell: function(draw, coords, radius, color){
+    var c = radius;
+    draw.line({
+      coords: [[coords[0]-c, coords[1]], [coords[0]+c, coords[1]]],
+      lineWidth: 2,
+      strokeStyle: 'DarkSalmon',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/3, coords[1]-c/3], [coords[0]-c/3, coords[1]+c/3]],
+      lineWidth: 2,
+      strokeStyle: 'DarkSalmon',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/3, coords[1]-c/3], [coords[0]-c/3, coords[1]+c/3]],
+      lineWidth: 2,
+      strokeStyle: 'DarkSalmon',
+      project: false
+    });
+  },//nd
+  
+//GALAXY LINE STAR  ORANGE
+  bcu: function(draw, coords, radius, color){ //active galaxy of uncertain type-dark grey cross
+   var c = radius*.66;
+    draw.line({
+      coords: [[coords[0], coords[1]-c], [coords[0], coords[1]+c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'grey',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]], [coords[0]+c, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'grey',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.85, coords[1]-c*.85], [coords[0]+c*.85, coords[1]+c*.85]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'grey',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.85, coords[1]+c*.85], [coords[0]+c*.85, coords[1]-c*.85]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'grey',
+      project: false
+    });
+    
+  },//active galaxy of uncertain type-dark grey linestar
+  rdg: function(draw, coords, radius, color){//radio galaxy
+    var c = radius*.75;
+    draw.line({
+      coords: [[coords[0]-c*.75, coords[1]], [coords[0]+c*.75, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*.75], [coords[0], coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]-c], [coords[0]+c, coords[1]+c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]+c], [coords[0]+c, coords[1]-c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+  },//radio galaxy
+  sbg: function(draw, coords, radius, color){//starburst galaxy, totally round star
+    var c = radius*.75;
+    draw.line({
+      coords: [[coords[0]-c*1.25, coords[1]], [coords[0]+c*1.25, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orangered',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c*1.25], [coords[0], coords[1]-c*1.25]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orangered',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.55, coords[1]-c*.55], [coords[0]+c*.55, coords[1]+c*.55]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orangered',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.55, coords[1]+c*.55], [coords[0]+c*.55, coords[1]-c*.55]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orangered',
+      project: false
+    });
+    /*draw.line({
+      coords: [[coords[0]-c, coords[1]], [coords[0]+c, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0], coords[1]+c], [coords[0], coords[1]-c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.75, coords[1]-c*.75], [coords[0]+c*.75, coords[1]+c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c*.75, coords[1]+c*.75], [coords[0]+c*.75, coords[1]-c*.75]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'orange',
+      project: false
+    });*/
+  },//starburst galaxy
+  agn: function(draw, coords, radius, color){
+  c = radius
+  	draw.line({
+      coords: [[coords[0]-c, coords[1]-c], [coords[0]+c, coords[1]+c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'peru',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c, coords[1]+c], [coords[0]+c, coords[1]-c]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'peru',
+      project: false
+    });
+  },//orange/brown cross
+  
+  //QUASAR-DIAMOND PURPLE
+  css: function (draw, coords, radius, color){
+  c = radius*1.25;
+  draw.line({
+      coords: [[coords[0], coords[1]-c/2], [coords[0]+c/2, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'purple',
+      project: false
+    }); // \
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]], [coords[0], coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'purple',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]], [coords[0], coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'purple',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]], [coords[0], coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'purple',
+      project: false
+    });
+  },// compact steep spectrun quasar purple diamond
+  ssrq: function (draw, coords, radius, color){
+  c = radius*1.25;
+  draw.line({
+      coords: [[coords[0], coords[1]-c/2], [coords[0]+c/2, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'DarkViolet',
+      project: false
+    }); // \
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]], [coords[0], coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'DarkViolet',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]-c/2, coords[1]], [coords[0], coords[1]-c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'DarkViolet',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]], [coords[0], coords[1]+c/2]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'DarkViolet',
+      project: false
+    });
+    draw.line({
+      coords: [[coords[0]+c/2, coords[1]], [coords[0]-c/2, coords[1]]],
+      lineWidth: 1,
+      strokeStyle: (color != 'useDefault')? color : 'DarkViolet',
+      project: false
+    });
+  },//ssrq quasar purple diamond    
+
+};
+
+astrojs.ready(function(e){
+
+// Create an in memory only element of type 'custom'
+var detachedContainer = document.createElement("custom");
+
+// Create a d3 selection for the detached container. We won't
+// actually be attaching it to the DOM.
+var dataContainer = d3.select(detachedContainer);
+
+	  // make a canvas
+	  var width = 1000,//960
+		  height = 500;
+		  d3.select('body').selectAll('canvas').remove(); 
+	  var canvas = d3.select("#werewolf")
+	    .append("canvas")
+	    .attr("style", "outline: solid black;")
+		.attr("width", width)
+		.attr("height", height);
+	  $("canvas").css({top:10,left:150,position:'relative'});
+	  
+
+/*
+	  $("canvas").prop("title", "SPACE THE FINAL FRONTIER");
+	  
+	  $("cavnas").tooltip ({
+	   disabled: true,
+	   close: function (event,ui) {$(this).tooltip("disable");}
+	  });
+	  $("canvas").on("click", function () {
+	   $(this).tooltip("enable").tooltip("open");
+	  });
+*/
+
+
+	  var context = canvas.node().getContext("2d");
+	  var coords, coords2;
+	  
+
+	  var projection = d3.geoMollweide()
+		  .scale(170)//165
+		 .translate([width /2, height /2])
+		  .precision(.1);
+		
+
+//create zoom
+canvas.call(d3.zoom()
+    .scaleExtent([1 / 3, 3])
+    .translateExtent([[-50,-50],[1050, 550]]) //keeps the map in the area
+    .on("zoom", zoomed));
+
+drawPoints();//draw the points
+
+var initial_transform = [0,0,1];
+function zoomed() {
+	if (document.getElementById("zoombox").checked){
+		  context = canvas.node().getContext("2d");
+		  context.clearRect(0, 0, width, height);
+		  context.translate(d3.event.transform.x-initial_transform[0],
+							d3.event.transform.y-initial_transform[1]);
+		  var scale = 1+d3.event.transform.k-initial_transform[2];
+		  context.scale(scale, scale);
+		  initial_transform = [d3.event.transform.x, d3.event.transform.y, d3.event.transform.k];
+		  drawPoints();
+		  context.restore();
+	}
+}
+
+function drawPoints(){
+var drawPoint = false;
+	var data = [];
+	  d3_events_length = 0;
+	
+ 	 // mirror the projection so it matches official plots
+	  var project = function(d) {
+	  	if (!Galactic){
+		return projection([(d[0]-180)*-1,d[1]]);
+		}
+		return projection([(d[0]) * -1 ,d[1]]);
+	  };
+
+	  // add background
+	  var path = d3.geoPath()
+		  .projection(projection)
+		  .context(context);
+	  var graticule = d3.geoGraticule()
+			  .step([30, 30]);
+	  context.clearRect(0,0,width,height);
+	  context.beginPath();
+	  path({type: "Sphere"});
+	  context.lineWidth = 2;
+	  context.stroke();
+	  reset_styles(context);
+
+	  context.beginPath();
+	  path(graticule());
+	  context.strokeStyle = 'grey';
+	  context.setLineDash([1,6]);
+	  context.stroke();
+	  reset_styles(context);
+
+	  var mydraw = draw(context,project);
+
+
+	  // make equator
+	  mydraw.line({
+		coords: [[0,0],[360,0]],
+		wrap: false,
+		strokeStyle: "grey",
+	  });
+
+	  // make galactic plane
+	  var plane_data = [];
+	  for(var i=-180;i<180;i+=.1) {
+	  var tmp;
+	  if (Galactic){
+	  tmp = [i, 0];
+	  plane_data.push(tmp);
+	  }
+	  else {
+	  tmp = astrojs.coordinates.galactic2equatorial(i,2);
+		plane_data.push([tmp.ra, tmp.dec]);
+		}
+	  }  
+	  mydraw.line({
+		coords: plane_data,
+		strokeStyle: 'grey'
+	  });
+	  
+	for (item in stringout){ //add points to list data
+	  	for (point in stringout[item][1]){
+	  		data.push(stringout[item][1][point]);
+		}
+	}
+		//info on data binding: http://alignedleft.com/tutorials/d3/binding-data
+	dataBinding = dataContainer.selectAll("custom.point")
+    .data(data, function(d) { return d; });
+
+    //handle selecting neutrinos for the ability to only draw the points inside the error range of selected neutrinos
+    d3.select('canvas').on("click", function (){
+		var x = d3.mouse(this)[0];
+		var y = d3.mouse(this)[1];
+		console.log('x: '+ x+',  y: '+ y);
+		var elements = dataContainer.selectAll("custom.point");
+		elements.each(function(d) {
+		console.log('here');
+			var node = d3.select(this);
+			var pointCoords = project([node.attr('ra'), node.attr('dec')]);
+			if (Math.abs(x-pointCoords[0]) < 5 && Math.abs(y-pointCoords[1]) < 5 && node.attr('kind') == 'neutrino'){
+				console.log('dec: '+ node.attr('dec')+' ra: '+ node.attr('ra'));
+				var selected = false
+				for(var i = 0;i < selected_events.length;i++){
+					if(selected_events[i] == node.attr('id')){
+						selected = true
+						var selectedindex = i;
+					}
+				}
+				if(selected == false){
+					selected_events.push(node.attr('id'));
+				}
+				else{
+					selected_events.splice(selectedindex, 1);
+				}
+	
+
+			}
+		});
+    
+});
+
+/*
+		Here a nest is used to organize data.
+		info on nests: https://github.com/d3/d3-collection/blob/master/README.md#nest
+		This is not yet implemented, but is being considered for use.
+	*///info
+	var sortedData = d3.nest()
+    .key(function(d, i) { return d.kind; })
+    .key(function(d, i) { return d.type; })
+    .entries(data);
+
+  
+  //d3_events_length = 0;
+  
+  // for new elements, create a 'custom' dom node, of class point.
+  //each dictionary entry is turned into a node of class point
+  /*
+  	The idea is that eventually, instead of the files being turned into text and then into a dictionary, and then into nodes in dataBinding, they are turned straight from the filetext into nodes in dataBinding
+  *///info
+  dataBinding.enter()
+      .append("custom")
+      .classed("point", true)
+      .attr("dec", function (d, i){
+      	return d['dec']
+      })
+      .attr("ra",function (d, i){
+      	return d['ra']
+      })
+      .attr("err", function (d, i){
+      	return d['err']
+      })
+      .attr("energy", function (d, i){
+      	return d['energy']
+      })
+      .attr("type", function (d, i){
+      	return d['type']
+      })
+      .attr("kind", function (d, i){
+      	return d['kind']
+      })
+      .attr("flux", function (d, i){
+      	return d['flux']
+      })
+      .attr("spec", function (d, i){
+      	return d['spec']
+      })
+      .attr("id",function (d){
+        if(d['kind'] == 'neutrino'){
+        d3_events_length++
+        return d3_events_length;
+        }else{
+        return 0;
+        }
+      });
+    dataBinding.exit()
+    	.remove();
+
+//draws all non-neutrino events
+var elements = dataContainer.selectAll("custom.point");
+  elements.each(function(d) {
+  var drawPoint = false;
+    var node = d3.select(this);
+    drawPoint = false;
+    //skip the point if it's a neutrino
+    if (node.attr("kind").includes('neutrino')){
+    	return; 
+	}
+	function findRadius(){
+		  	if (node.attr("kind").includes('gamma_ray')){		  	
+		  			return 2; //gamma_ray
+		  		}
+		  	else if (node.attr("kind").includes('source') ||node.attr("kind").includes('source')){
+		  			console.log('found source');
+		  			return 4; //source
+		  		}
+		  	return 3;//can't tell what it is... :(
+	}
+
+	if(document.getElementById('onlyErr').checked){
+		var all_events = dataContainer.selectAll("custom.point");
+		all_events.each(function(d) {
+			var n = d3.select(this);
+			//console.log(n.attr('id'))
+			if(n.attr('kind').includes('neutrino') && parseFloat(n.attr('err')) > 0){
+				for(var u = 0;u<selected_events.length;u++){
+					if(selected_events[u] == n.attr('id')){
+						if(Math.sqrt(Math.pow(Math.abs(n.attr('ra') - node.attr('ra')),2) + Math.pow(Math.abs(n.attr('dec') - node.attr('dec')),2)) < n.attr('err')){
+							drawPoint = true;
+						}
+	
+					}
+				}
+			}
+		})
+	
+	}//
+	else {
+		drawPoint = true;
+	}
+	console.log('draw point is: '+ drawPoint);
+	if (drawPoint){
+		if (node.attr('kind').includes('gamma_ray') || node.attr('kind').includes('other')){
+			mydraw.circle({
+				  coords: [node.attr("ra"), node.attr("dec")],
+				  radius: findRadius (node),
+				  fill: true,
+				  stroke: false,
+				  fillStyle: colorfinder(node),
+				  raw: true
+				})
+		}//source data & types called to draw here. 
+		var type = (node.attr("type") == 'null' && node.attr("type").includes('source') && document.getElementById(1).checked)? 'UNID' : node.attr("type");
+		if (type != undefined && type != null && type != 'null') {
+			if (['pwn','psri', 'psr', 'spp', 'glc', 'bcu', 'agn', /*'bin',*/ 'bll', 'css', 'fsrq',/*'gal', 'hmb', 'nlsy1', 'nov',*/ 'rdg', 'sbg', /*'sey', 'sfr',*/ 'snr', 'spp', 'ssrq', 'hbl', 'compositesnr', 'massivestarcluster', 'shell', 'snrmoleccloud', 'unid'].includes(type.toLowerCase())){
+				
+				var coords = (['pwn','psri', 'psr', 'spp', 'glc'].includes(type.toLowerCase()))? [[node.attr("ra"), node.attr("dec")], project([node.attr("ra"), node.attr("dec")])] : project([node.attr("ra"), node.attr("dec")]);
+				if ((node.attr("kind").includes('source') || node.attr("kind").toLowerCase().includes('hawc')) && (document.getElementById('spec_index').checked || document.getElementById('flux').checked)){
+					types[type.toLowerCase()](mydraw, coords, 6, colorfinder(point));//keep in mind this is 6 for everything when creating/editing types
+				}
+				else {
+					types[type.toLowerCase()](mydraw, coords, 6, 'useDefault');
+				}
+			}
+		}
+	}	
+//return color for the point
+function colorfinder(){
+	//linear scale
+	var linColorScaleGamma = d3.scaleLinear()
+   //.domain([Math.sqrt(sliders("gamma_rayslider").get(0)),Math.sqrt(sliders("gamma_rayslider").get(1))])
+   .domain([sliders("gamma_rayslider").get(0),sliders("gamma_rayslider").get(1)])
+    .range([document.getElementById('colgmin').value, document.getElementById('colgmax').value]);  // or use hex values;
+    
+    var linColorScalesourcespec = d3.scaleLinear()
+   //.domain([Math.sqrt(sliders("sourceslider").get(0)),Math.sqrt(sliders("sourceslider").get(1))])
+   .domain([sliders("sourceslider").get(0),sliders("sourceslider").get(1)])
+    .range([document.getElementById('colsourcemin').value, document.getElementById('colsourcemax').value]); 
+    
+    var linColorScalesourceflux = d3.scaleLinear()
+   .domain([sliders("sourceslider").get(0),sliders("sourceslider").get(1)])
+    .range([document.getElementById('colsourcemin').value, document.getElementById('colsourcemax').value]); 
+    
+    //linear squareroot scale
+    var linsqrtColorScaleGamma = d3.scaleLinear()
+   .domain([Math.sqrt(sliders("gamma_rayslider").get(0)),Math.sqrt(sliders("gamma_rayslider").get(1))])
+    .range([document.getElementById('colgmin').value, document.getElementById('colgmax').value]);  // or use hex values;
+    
+    var linsqrtColorScalesourcespec = d3.scaleLinear()
+   .domain([Math.sqrt(sliders("sourceslider").get(0)),Math.sqrt(sliders("sourceslider").get(1))])
+    .range([document.getElementById('colsourcemin').value, document.getElementById('colsourcemax').value]); 
+    
+    var linsqrtColorScalesourceflux = d3.scaleLinear()
+   .domain([Math.sqrt(sliders("sourceslider").get(0)),Math.sqrt(sliders("sourceslider").get(1))])
+    .range([document.getElementById('colsourcemin').value, document.getElementById('colsourcemax').value]); 
+    
+    //logarithmic scale
+    var logColorScaleGamma = d3.scaleLog()
+    .base([10])
+   .domain([sliders("gamma_rayslider").get(0),sliders("gamma_rayslider").get(1)])
+    .range([document.getElementById('colgmin').value, document.getElementById('colgmax').value]);  // or use hex values;
+
+    var logColorScalesourcespec = d3.scaleLog()
+    .base([10])
+   .domain([sliders("sourceslider").get(0),sliders("sourceslider").get(1)])
+    .range([document.getElementById('colsourcemin').value, document.getElementById('colsourcemax').value]); 
+    
+    var logColorScalesourceflux = d3.scaleLog()
+    .base([10])
+   .domain([sliders("sourceslider").get(0),sliders("sourceslider").get(1)])
+    .range([document.getElementById('colsourcemin').value, document.getElementById('colsourcemax').value]);
+	
+	if (node.attr('kind').includes("gamma_ray")){
+		var scaleType = document.getElementById('gamma_rayColorScale').options[document.getElementById('gamma_rayColorScale').selectedIndex].value;
+		if (scaleType.includes('lin')){
+			return (scaleType == 'linsqrt')? linsqrtColorScaleGamma(Math.sqrt(node.attr('energy'))) : linColorScaleGamma(node.attr('energy'));
+		}
+			return logColorScaleGamma(node.attr('energy'));
+	
+		}
+	else if (node.attr('kind').toLowerCase().includes('hawc') || node.attr('kind').includes('source')){
+		var scaleType = document.getElementById('sourceColorScale').options[document.getElementById('sourceColorScale').selectedIndex].value;
+		if (document.getElementById('spec_index').checked) {
+			if (scaleType.includes('lin')){
+					return (scaleType == 'linsqrt')? linsqrtColorScalesourcespec(Math.sqrt(node.attr('spec'))) : linColorScalesourcespec(node.attr('spec'));
+				}
+				return logColorScalesourcespec(node.attr('spec'));		
+		} 
+		if (document.getElementById('flux').checked) {
+			if (scaleType.includes('lin')){
+					return (scaleType == 'linsqrt')? linsqrtColorScalesourceflux(Math.sqrt(node.attr('flux'))) : linColorScalesourceflux(node.attr('flux'));
+				}
+				return logColorScalesourceflux(node.attr('flux'));
+		}
+			
+		return 'black'
+	}
+}
+		
+});//end of for each node loop
+
+//draws all neutrinos
+var ncount = 0;
+  elements.each(function(d) {
+    var node = d3.select(this);
+    if (!node.attr("kind").includes('neutrino') ) //if not a neutrino, move on
+    	return;
+
+    var neutrino_selected = false;
+    for(var o = 0;o < selected_events.length; o++){
+		if(selected_events[o] == node.attr('id')){
+			neutrino_selected = true
+		}
+    }
+    if(!document.getElementById('filterNeutrinos').checked){
+    	neutrino_selected = true;
+    }
+    if(neutrino_selected == false){
+    	return;
+    }
+
+			mydraw.circle({
+			  coords: [node.attr("ra"), node.attr("dec")],
+			  radius: 6,
+			  fill: true,
+			  stroke: false,
+			  fillStyle: colorFinder(),
+			  raw: true
+			})
+			
+			if (node.attr("err") > 6) {
+			  mydraw.circle({
+				coords: [parseFloat(node.attr("ra")), parseFloat(node.attr("dec"))],
+				radius: parseFloat(node.attr("err")),
+				strokeStyle: colorFinder(),
+				wrap: true
+			  });
+			}
+				//this.parentNode.appendChild(this);
+				ncount++;
+				mydraw.text({
+				  coords: [node.attr("ra"), node.attr("dec")],
+				  font: "12px sans-serif",
+				  text: ""+node.attr("id")
+				});	
+				
+		//draw the type of the neutrino: the cross(shower) or x(track).
+		var type = node.attr("type");
+		if (type != undefined && type != null && type != 'null') {
+			if (['track', 'shower'].includes(type.toLowerCase())){
+		  		types[type.toLowerCase()](mydraw, project([node.attr("ra"), node.attr("dec")]), 6, 'useDefault');	
+		  	}
+		}
+//return color for neutrinos
+function colorFinder(){
+	//linear scale
+    var linColorScaleNeutrino = d3.scaleLinear()
+   	.domain([sliders("neutrinoslider").get(0),sliders("neutrinoslider").get(1)])
+    .range([document.getElementById('colnmin').value, document.getElementById('colnmax').value]); 
+
+	//linear squareroot scale
+	var linsqrtColorScaleNeutrino = d3.scaleLinear()
+   	.domain([Math.sqrt(sliders("neutrinoslider").get(0)), Math.sqrt(sliders("neutrinoslider").get(1))])
+    .range([document.getElementById('colnmin').value, document.getElementById('colnmax').value]); 
+
+    //logarithmic scale
+    var logColorScaleNeutrino = d3.scaleLog()
+    .base([10])
+   	.domain([sliders("neutrinoslider").get(0),sliders("neutrinoslider").get(1)])
+    .range([document.getElementById('colnmin').value, document.getElementById('colnmax').value]); 
+    
+	var scaleType = document.getElementById('neutrinoColorScale').options[document.getElementById('neutrinoColorScale').selectedIndex].value;
+	if (scaleType.includes('lin')){
+		return (scaleType == 'linsqrt')? linsqrtColorScaleNeutrino(Math.sqrt(node.attr('energy'))) : linColorScaleNeutrino(node.attr('energy'));
+	}
+	return logColorScaleNeutrino(node.attr('energy'));
+}
+		
+});//end of for each node loop (neutrino)
+
+console.log('drawPoints done');
+}//end of drawPoints
+});//end of astrojs
+}//end of skymap function
+
+function updateTypeList(){ //UI
+
+	var k;
+	var typelist = [];
+	//this for loops goes through the source types and adds the selected ones to typeList
+	for (k = 1; k < 21; k++){
+		if (document.getElementById(String(k)).checked){
+			typelist.unshift(document.getElementById(String(k)).name.toLowerCase());
+		}
+	}
+	if (document.getElementById('track').checked) {typelist.unshift('track');} //************
+	if (document.getElementById('shower').checked) {typelist.unshift('shower');}
+	if (document.getElementById('other').checked) {typelist.unshift('other');} //************
+	typelist.unshift('null');
+	return typelist;
+}
+//this sets the text displayed in the file selector. User uploaded files will just have their filename as their text
+function getDropDownText(fileName){ //UI
+	var names = [["fermit1.txt", "FERMI Photon data release Apr 15 2015"],
+	 ["fermit2.txt", "FERMI Photon data release June 22 2017"], 
+	 ["fermit3.txt", "FERMI Photon data release Apr 04 2015"], 
+	 ["fermit4.txt", "FERMI Photon data release Dec 08 2016"], 
+	 ["hawc2.txt", "HAWC Sources"], ["output_Observation.txt", "4 years of IceCube Data"],
+	 ['nhdata.txt', "Northern Hemisphere High Energy Neutrinos"],
+	 ['pointsources.txt','Fermi 4-yr point source catlog'] ];
+	 for (item in names){
+	 	if (names[item][0] == fileName){
+	 		return names[item][1];
+	 	}
+	 }
+	 var shortname = fileName.split('/')[fileName.split('/').length-1];
+	 return shortname.substring(0, shortname.length-4);
+}
+
+function isSelected(kind, filename){ //UI
+	var end = false;
+			$('#'+kind+"select option").each(
+				function(){
+					if (this.selected){ 
+						if (filename.split('/')[filename.split('/').length-1] == this.value.split('/')[this.value.split('/').length-1]){
+							end = true;
+						}
+					}
+				});//end of 1st function
+	return end;
+}
+
+function addFileName (filepath, placement){ //UI
+
+//set the sliders max and min energy params according to the files selected
+function changeEnergyParams(name){ //UI
+	var a = 0;
+	var min = -1;
+	var max = -1;
+		$('#'+name+'select option').each(function(){
+		if (this.selected){
+			for (a = 0; a < rangeList.length; a++){
+				if (rangeList[a][0].split('/')[rangeList[a][0].split('/').length-1] == this.value.split('/')[this.value.split('/').length-1] ){
+					var index = (document.getElementById('spec_index').checked && name == 'source') ? 2:1;
+					if ((min == -1 || rangeList[a][index][0] < min) && rangeList[a][index][0] != "null" && rangeList[a][index][0] != null) { min = rangeList[a][index][0]; }
+					if ((max == -1 || rangeList[a][index][1] > max) && rangeList[a][index][1] != "null" && rangeList[a][index][1] != null) { max = rangeList[a][index][1]; }
+				}
+			}
+		}
+		});
+		sliders(name+"slider").set(parseFloat(min),parseFloat(max),null);
+		if (name == 'source'){ //go and switch the displayed text
+		//showUIParts is called here because changeEnergyParams() could be being called because of the user changing the flux/spectral index checkboxes. When they change, not only does the energy values shown on the slider need to change, but the text over the slider needs to change as well, and that is done in showUIParts.
+			showUIParts(false);
+		}
+}
+
+//show the download and use info about the fermi converter
+function show_fermi_info(){ //UI
+	var x = document.getElementById("ferminfo");
+	if(x.style.display == 'block'){
+		x.style.display = 'none';
+	}else{
+		x.style.display = 'block';
+	}
+}
+
+function setEnergySlider(word, indices, kind ){
+	var range = []; 
+	var refinedKind =(kind.toLowerCase().includes('hawc'))? 'source': kind.split('userupload')[0].toLowerCase();
+	/*
+	The following gets the min and max values of the slider from the text input box above it. 
+	range[0] = min
+	range[1] = max
+	*/
+	range = [sliders(refinedKind+"slider").get(0),sliders(refinedKind+"slider").get(1)];
+
+	if (document.getElementById('spec_index').checked == true && ['hawc', 'source'].includes(kind.split('userupload')[0].toLowerCase())){
+		if ( parseFloat(word[indices[8]]) >= range[0] && parseFloat(word[indices[8]]) <= range[1]  ||
+		(kind.includes('userupload') && (word[indices[8]] == 'null' || word[indices[8]] == null))){
+			return true;
+		}
+			return false;
+	}
+	if (document.getElementById('flux').checked == true && ['hawc', 'source'].includes(kind.split('userupload')[0].toLowerCase())){
+		if (parseFloat(word[indices[7]]) >= range[0] && parseFloat(word[indices[7]]) <= range[1] ||
+		(kind.includes('userupload') && (word[indices[7]] == 'null' || word[indices[8]] == null))){
+			return true;
+		}
+		return false;
+	}
+	if(['gamma_ray', 'neutrino'].includes(kind.split('userupload')[0].toLowerCase())){
+		if (range[0] <= parseInt(word[indices[5]]) && range[1] >= parseInt(word[indices[5]]) ||
+		(kind.includes('userupload') && (word[indices[5]] == 'null' || word[indices[5]] == null))){
+			return true;
+		}
+		return false;
+	}
+return true;
+}
+
+var Galactic = true; //VAR
+
+function coordType(){ //DATA
+if (document.getElementById("galactic").checked){
+Galactic = true;
+}
+if (document.getElementById("equatorial").checked){
+Galactic = false;
+}
+}
+if (placement == 'hawc'  || placement == 'fermi'){
+	placement = 'source';
+}
+if (!(placement == 'source' || placement == 'neutrino' || placement == 'gamma_ray')){
+	placement = 'other';
+}
+	var pathArray = filepath.split('/');
+	var fileName = pathArray[pathArray.length-1];
+	var drop = document.createElement('option');
+	drop.value = fileName;
+	drop.text = getDropDownText(fileName);
+	var canUse = true;
+	for (var i = 0; i < document.getElementById(placement.toLowerCase()+'select').length; i++){
+		if (document.getElementById(placement+i) != null){
+			if (document.getElementById(placement+i).value == fileName){ //if the name is already in that dropdown
+				canUse = false;
+			}
+		}
+	}
+	if (canUse){ //if the name isn't in the dropdown.
+		drop.id = (placement+document.getElementById(placement+'select').length);
+		document.getElementById(placement+'select').add(drop);
+		}
+}
+
+//rangelist entry: [[filename,[max, min]],...] //for source:[[filename,[smax, smin], [fmax, fmin]],...]
+var rangeList = [];
+function findRangeEnergy(filename, text, kind){ //DATA
+	var setoff = [0,0,0,0,0,0,0,0,0];
+	indices = getIndices(text);
+	var d;
+	var min; var max; var extramin; var extramax;
+	var gotStartR1 = [false, false];
+	var gotStartR2 = [false, false];
+
+	if (text[0] == null || Array.isArray(text)) { console.log('returning null null');return [null, null];}
+	var index = (['neutrino', 'gamma_ray'].includes(kind.toLowerCase())) ? 5: 7;
+	var lines = text.split('\n'); 
+	for (d = 1; d < lines.length; d++){
+		var word = lines[d].trim().split(/\s+/);
+		
+		//resets setoff
+		for (item in indices){
+			setoff[item] = indices[item];
+		}
+		
+		for (entry = 0; entry < word.length; entry++){
+			if (word[entry] != null && word[entry] != undefined) {
+				if (word[entry].includes('(')){
+					for (var h = entry; h < word.length; h++) {
+						if (word[h].includes(')')){
+							for (item in indices){
+								if (indices[item] >= entry){
+									setoff[item] += h-entry+1;
+								}
+							}
+						}
+					} 
+				}
+			}
+		}
+
+		if (word[setoff[index]] != 'null' && !isNaN(word[setoff[index]])){
+			if (parseFloat(word[setoff[index]]) > max || !gotStartR1[0]) {max = word[setoff[index]]; gotStartR1[0] = true;}
+			if (parseFloat(word[setoff[index]]) < min || !gotStartR1[1]) {min = parseFloat(word[setoff[index]]); gotStartR1[1] = true;}
+			if (index == 7){
+				if (parseFloat(word[setoff[index+1]]) > extramax && word[setoff[index+1]] != 'null' || !gotStartR2[0]) {extramax = parseFloat(word[setoff[index+1]]); gotStartR2[0] = true;}
+				if (parseFloat(word[setoff[index+1]]) < extramin && word[setoff[index+1]] != 'null' || !gotStartR2[1]) {extramin = parseFloat(word[setoff[index+1]]); gotStartR2[1] = true;}
+			}
+		}
+	}//[[emax, emin], [dfs, sdfs]] or [[fmin, mfax],[smin, smax]]
+	
+	var rangeOne = (min === max)? [null, null] : [min, max];
+	var rangeTwo = (extramin === extramax)? [null, null] : [extramin, extramax];
+	
+	if (!rangeList.includes([filename, rangeOne, rangeTwo])){
+		rangeList.push([filename, rangeOne, rangeTwo]);
+	}
+}
+
+function getIndices(text){ //DATA
+var words = text.split('\n');
+headed = false;
+var indices = [0,1,2,3,4,5,6,7,8,9];
+var offset = 0;
+
+if (words[0].trim().toLowerCase().includes('dec')){
+	console.log('found header');
+		headed = true
+		indices = [null,null,null,null,null,null,null,null,null,null]
+		var columns = words.shift().trim().split(/\s+/);
+		
+		var combos = {"DISTRIBUTED":"ENERGY",
+					  "ANG":"RESOLUTION",
+					  "ANGULAR":"RESOLUTION",
+					  "DEPOSITED":"ENERGY",
+					  "RIGHT":"ASCENSION"}
+		
+		for(var h = 0; h < columns.length; h++){
+			for(key in combos){
+				if(columns[h].toUpperCase() == key){ 
+					if(columns[h+1].toUpperCase() == combos[key]){
+						var s = (columns.slice(h, h+1).concat(columns.slice(h+1, h+2))).join("_");
+						console.log('s ' + s);
+						columns.splice(h+1,1);
+						columns[h] = s;
+					}
+				}
+			}
+		}
+	//console.log(columns);
+		for(m = 0; m < columns.length; m++){
+			c = columns[m]
+			if (c.toUpperCase().charAt(0) == "[" && c.toUpperCase().charAt(c.length-1) == "]") {
+				offset++;
+			}
+			else if (c.toUpperCase().charAt(0) == "(" && c.toUpperCase().charAt(c.length-1) == ")") {
+				offset++;
+			}
+			else if (c == null || c.length < 1) {
+				console.log('found null!');
+				offset++;
+			}
+			else if(c.toUpperCase().includes("RA") || c.toUpperCase() == "RIGHT_ASCENSION"){
+				indices[1] = m-offset;
+			}
+			else if (c.toUpperCase().includes("DEC") || c.toUpperCase().includes("DECLINATION")){
+				indices[0] = m-offset;
+			}
+			else if (c.toUpperCase().includes("FLUX") || c.toUpperCase() == "FL"){
+				indices[7] = m-offset;
+			}
+			else if (c.toUpperCase().includes("SPECTRAL INDEX") || c.toUpperCase() == "SPEC"){
+				indices[8] = m-offset;
+			}
+			else if (c.toUpperCase() == "E" || c.toUpperCase().includes("ENERGY") || 
+					 c.toUpperCase().includes("MEV") || c.toUpperCase().includes("GEV") || 
+					 c.toUpperCase().includes("TEV") || c.toUpperCase().includes("KEV") ){
+				indices[5] = m-offset;
+			}
+			else if (c.toUpperCase() == "TOPOLOGY" || c.toUpperCase().includes("TOP") ||
+					 c.toUpperCase() == "SIGNATURE"){
+				indices[3] = m-offset;
+			}
+			else if (c.toUpperCase().includes("ERR") || c.toUpperCase().includes("ANG_RESOLUTION") ||
+					 c.toUpperCase().includes("ANGULAR_RESOLUTION")){
+				indices[2] = m-offset;
+			}
+			else if (c.toUpperCase().includes("TIME") || c.toUpperCase().includes("MDJ")){
+				indices[6] = m-offset;
+			}
+		}
+		
+	}
+	return indices;
+}
+
+var typeList =[];//VAR
+function readFile(text, kind, nameoffile){ //DATA
+	var words = text.split('\n');
+	var type = 'null';
+	var hese = [];
+	var search = 1; 
+	var stop = 0;
+	var h; var entry;
+	var setoff = [0,0,0,0,0,0,0,0,0];
+	
+	if(document.getElementById("timeselect").value == "s"){
+	var margin = parseFloat(document.getElementById("margin").value);
+}else if(document.getElementById("timeselect").value == "m"){
+	var margin = parseFloat(document.getElementById("margin").value) * 60;
+}else if(document.getElementById("timeselect").value == "h"){
+	var margin = parseFloat(document.getElementById("margin").value) * 3600;
+}else if(document.getElementById("timeselect").value == "d"){
+	var margin = parseFloat(document.getElementById("margin").value) * 86400;
+}else if(document.getElementById("timeselect").value == "m"){
+	var margin = parseFloat(document.getElementById("margin").value) * 2592000;
+}else if(document.getElementById("timeselect").value == "y"){
+	var margin = parseFloat(document.getElementById("margin").value) * 31104000;
+}
+	//param has some of the parameters for the data the user wants. the rest of the parameters are directly from html input elements and from typeList and rangeList
+	var param = {'kind': ['null'], 
+				 'timeMin': (Date.parse(document.getElementById("day").value + " " + document.getElementById("month").value + " "
+				  + document.getElementById("year").value + " " + document.getElementById("hour").value + ":" 
+				  + document.getElementById("minute").value + ":" + document.getElementById("second").value)/1000 - margin), 
+				  'timeMax': (Date.parse(document.getElementById("day").value + "-" + document.getElementById("month").value 
+				  + "-" + document.getElementById("year").value + " " + document.getElementById("hour").value + ":" 
+				  + document.getElementById("minute").value + ":" + document.getElementById("second").value)/1000 + margin)};
+				  
+	if (document.getElementById('gamma_ray').checked) {
+		param["kind"].splice(-1, 0, 'gamma_ray', 'Gamma_Ray', 'Gamma_ray'); //fermi
+	} 
+	if (document.getElementById('neutrino').checked) {
+		param["kind"].splice(-1, 0, 'neutrino', 'Neutrino');//icecube
+	}
+	if (document.getElementById('source').checked) {
+		param["kind"].splice(-1, 0, 'hawc', 'HAWC', 'Source', 'source');//hawc
+	}
+	if (document.getElementById('other').checked) {//start of change
+		param["kind"].splice(-1, 0, 'other');//other
+	}//end of change
+		
+	indices = getIndices(text);
+	//search must be greater than words.length
+	//stop is if you want a certain amount of data points from the current set
+	while (search < 100000 && stop < 22500 && search < words.length) {
+		
+		//resets setoff
+		for (item in indices){
+			setoff[item] = indices[item];
+		}
+		
+		var word = words[search].trim().split(/\s+/);
+		
+		if (words == null ){
+			break;
+		}
+		if(word[1] == null || words.length < 2){
+			search++;
+			continue;
+		}
+		
+		//check for items in parenthesis, which will be excluded.
+		/*
+		This is checked for every word instead of for just one entry in the list words
+		because one line could contain :
+			( -21.6  +25.9)
+		and be broken up into [ (, -21.6, +25.9) ], while another line could contain :
+			(-144.4 +131.6)
+		could be broken up into [ (-144.4, +131.6) ] meaning the number to offset the 
+		index by in one line is not always the same as in another line.
+		*///info
+		for (entry = 0; entry < word.length; entry++){
+			if (word[entry] != null && word[entry] != undefined) {
+				if (word[entry].includes('(')){
+					for (var h = entry; h < word.length; h++) {
+						if (word[h].includes(')')){
+							for (item in indices){
+								if (indices[item] >= entry){
+									setoff[item] += h-entry+1;
+								}
+							}
+						}
+					} 
+				}
+			}
+		}
+		
+		//if index of a param wasn't found, set the index to point to 'null' MOVE LATER
+		word.push('null');
+		for(var index = 0; index < setoff.length; index++){
+			if(setoff[index] == null){
+				setoff[index] = parseInt(word.length);	
+			}
+		}
+		
+		//for user uploaded files, the kind is inputted by the user. 
+		eventKind = (kind != 'nope' && kind != null)? kind : word[4]; 
+		eventType = (word[setoff[3]] == null)? 'null' : word[setoff[3]];
+		eventType = (eventType.toLowerCase() == 'cascade')? 'shower' : eventType;
+		//kind type dec ra err energy flux spec filename
+		if (param["kind"].includes(eventKind.split('userupload')[0].toLowerCase())){ 
+			 if (updateTypeList().includes(eventType.toLowerCase()) || eventKind.includes('userupload')){
+					if (document.getElementById("timebox").checked == false || param['timeMin'] < parseFloat(word[setoff[6]]) && param['timeMax'] > parseFloat(word[setoff[6]])){
+						if (setEnergySlider(word, setoff, eventKind)){
+							astrojs.ready(function(e){
+								if (Galactic){
+									var c = astrojs.coordinates.eq2gal(parseFloat(word[setoff[1]]), parseFloat(word[setoff[0]]), 2000);
+									word[setoff[0]] = c.b;
+									word[setoff[1]] = c.l;
+									//lat = b or dec, long = l or ra
+								} }); 
+								hese.push({dec: parseFloat(word[setoff[0]]), ra: parseFloat(word[setoff[1]]),
+								err: parseFloat(word[setoff[2]]), type: eventType,
+								kind: eventKind, energy: parseFloat(word[setoff[5]]), flux: parseFloat(word[setoff[7]]), spec: parseFloat(word[setoff[8]]), filename: nameoffile}) ;
+								stop ++;
+						}
+				   }     	    	    
+			 }
+		}
+		search++;
+	}	
+	return hese;
+}//end of readFile
+
+var inputKinds = []; //VAR
+function showUIParts(cont){
+
+	if (document.getElementById("timebox").checked){
+	document.getElementById("times").style.display = "initial"; 
+	 document.getElementById("vampire").style.display = "initial";
+	}else{
+	document.getElementById("times").style.display = "none";
+	 document.getElementById("vampire").style.display = "none";
+	}
+	if(document.getElementById("spec_index").checked){
+	document.getElementById("spec_form").style.display = 'initial';
+	}else{
+	document.getElementById("spec_form").style.display = 'none';
+	}
+	if(document.getElementById("flux").checked){
+	document.getElementById("flux_form").style.display = 'initial';
+	}else{
+	document.getElementById("flux_form").style.display = 'none';
+	}	
+}
+
+function readUserFiles(){ //DATA
+	var input = document.getElementById("myFile"); 
+		var text = [];
+		var inInputKinds = false
+		for (var r =0; r < input.files.length; r++){
+            inInputKinds = false;
+            for (entry in inputKinds) {
+                if (inputKinds[entry][0] == input.files[r].name) {
+                    inInputKinds = true;
+                }
+            }
+            if (!inInputKinds){
+                var found = false;
+                while (!found){
+                    var kind = prompt("Please enter the kind of data in file: " + input.files[r].name + "\n This can be 'neutrino', 'source', 'gamma ray', or 'other'.", "other");
+                    if (kind != null){
+                        kind = (kind.toLowerCase() == 'gamma ray') ? 'gamma_ray' : kind.toLowerCase();
+                        if (['gamma_ray', 'neutrino', 'source', 'other'].includes(kind)){
+                            found = true;
+                        }
+                    }
+                }
+                inputKinds.push([input.files[r].name, kind]);
+            }
+			var reader = new FileReader();
+				reader.onload = function (r, reader, inputKinds){ return function() {
+					var kind;
+						for (item in inputKinds){
+							if (inputKinds[item][0] == input.files[r].name) {
+								kind = inputKinds[item][1];
+								break;
+							}
+						}
+						
+						if (document.getElementById(kind).checked && isSelected(kind, input.files[r].name) && cont){
+							//text = Object.assign({}, text, readFile(reader.result, kind+'userupload', input.files[r].name));
+							text.concat(readFile(reader.result, kind+'userupload', input.files[r].name));
+						}
+						
+						//handle UI changes that come with the user uploading files
+						addFileName(input.files[r].name, kind);
+						findRangeEnergy(input.files[r].name, reader.result, kind);
+						if (input.files.length == r+1 && cont){
+							readProgramFiles(text, nestData(filelist));
+						}
+				
+			};  } (r, reader, inputKinds);
+			 if (input.files.length > 0){
+			 while (reader.readyState == 1 ){
+				}
+				 reader.readAsText(input.files[r]);
+				}
+		}
+		//if (input.files.length <= 0 && cont){readProgramFiles([], nestData(filelist));}
+}
+
+//function changeParams(thing){
+		//handles files already in the program
+function readProgramFiles(files, ready){
+	var q;
+	var output = [];
+	for (q = 0; q < files.length; q++){
+	   var rawFile = new XMLHttpRequest();
+		rawFile.open("GET", files[q]);
+		rawFile.overrideMimeType("text/plain; charset=x-user-defined");
+		rawFile.onreadystatechange =  function(rawFile,q){ return function () {
+			if(rawFile.readyState === 4) {
+				if(rawFile.status === 200 || rawFile.status == 0) {	
+					var kindOfFile = rawFile.responseText.split("\n")[2].split(" ")[4].toLowerCase();
+					var textid = (kindOfFile == 'hawc') ? 'source' : kindOfFile; 
+					if (document.getElementById(textid).checked && isSelected(textid, files[q])){
+						output.push([files[q], readFile(rawFile.responseText, rawFile.responseText.split("\n")[1].split(" ")[4].toLowerCase(), files[q])]);
+					}
+					addFileName(files[q], rawFile.responseText.split("\n")[1].split(" ")[4].toLowerCase());
+					findRangeEnergy(files[q], rawFile.responseText, textid);
+					if (q+1 >= files.length){
+						ready(output);
+					}
+				}
+			}
+		}; }(rawFile,q);
+		rawFile.addEventListener("progress", function(){console.log("progress");});
+		rawFile.addEventListener("load", function(){console.log("load");});
+		rawFile.addEventListener("error", function(evt){
+			console.log("error");
+			console.log(evt);
+		});
+		rawFile.addEventListener("abort", function(){console.log("abort");});
+		rawFile.send();
+	}
+}
+
+//readProgramFiles(files,nestData(filelist)); //CALL
+
+function nestData(filelist){
+	var data = []; 
+	//files already included in the program. They should be in the Data file.
+	/*var files = ["/~eforberger/Data/hawc2.txt","/~eforberger/Data/nhdata.txt", "/~eforberger/Data/output_Observation.txt",
+		     "/~eforberger/Data/fermit1.txt", "/~eforberger/Data/fermit2.txt", "/~eforberger/Data/fermit3.txt",
+		      "/~eforberger/Data/fermit4.txt", "/~eforberger/Data/pointsources.txt"];
+		      */
+	var files = ["./Data/hawc2.txt","./Data/nhdata.txt", "./Data/output_Observation.txt",
+		     "./Data/fermit1.txt", "./Data/fermit2.txt", "./Data/fermit3.txt",
+		      "./Data/fermit4.txt", "./Data/pointsources.txt"];//to run locally
+			  
+	//adds user inputted files to filelist:
+	for (var h = 0; h  < thing.length; h++){
+		//filelist.push(thing[h]);
+		data = data.concat(thing[h][1]);
+	}
+	for (var j = 0; j < filelist.length; j ++){
+		data = data.concat(filelist[j][1]);
+	}
+	
+	/*nest.map(array) <>
+
+Applies the nest operator to the specified array, returning a nested map. Each entry in the returned map corresponds to a distinct 
+key value returned by the first key function. The entry value depends on the number of registered key functions: if there is an additional key, 
+the value is another map; otherwise, the value is the array of elements filtered from the input array that have the given key value. 
+If no keys are defined, returns the input array.
+	aka creates a map of maps 
+	*/
+	
+	
+//kind type dec ra err energy flux spec filename
+if (data != null){
+	var entries = d3.nest()
+		.key(function(d) { return d.filename; })
+		.key(function(d) { return d.kind; })//neutrino, gray, source, other
+		.key(function(d) { return d.type; })
+		.key(function(d) { return d.status; }).sortValues(d3.ascending)
+		//.sortKeys(function(a,b) { return priority_order.indexOf(a) - priority_order.indexOf(b); })
+		.sortValues(function(a,b) { return parseFloat(a.dec) - parseFloat(b.dec); }) //})
+		//.entries(data);
+		.map(data);
+		
+	console.log(entries);
+}
+
+	/*
+		From the map of data, will return a list of data that contains the arg quality 
+	*/
+	/*function getValues(var quality){
+		if (entries.has(quality)){
+		
+		}
+	}*/
+//TEST END
+
+//call skymap, draws the data and map, and handles zooming
+skymap(data);
+//});
+}//end of change params
+</script>
+</div>
+<div style="width:100%;clear:both; height: 30px;">
+<p> By Elsa Forberger, Haley James, Blake Gallay, Marcus Graham, and Emme Hannibal </p>
+</div>
+
+</body>
+</html>
+
